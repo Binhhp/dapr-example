@@ -1,0 +1,10 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.sqlserver
+  version: v1
+  metadata:
+  - name: connectionString
+    value: server=rc365test01.southeastasia.cloudapp.azure.com;user id=sa;password=aod@123;database=DaprExample;
