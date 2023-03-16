@@ -33,7 +33,8 @@ namespace MyService
                         builder.Services.AddSingleton<BankService>();
                         builder.Services.AddActors(options =>
                         {
-                            options.Actors.RegisterActor<DemoActor>();
+                            options.Actors.RegisterActor<BarberManagerActor>();
+                            options.Actors.RegisterActor<BarberActor>();
                         });
                         builder.WebHost
                                     .UseKestrel()

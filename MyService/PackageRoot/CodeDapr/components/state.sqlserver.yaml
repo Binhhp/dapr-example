@@ -8,3 +8,5 @@ spec:
   metadata:
   - name: connectionString
     value: server=rc365test01.southeastasia.cloudapp.azure.com;user id=sa;password=aod@123;database=DaprExample;
+  - name: actorStateStore
+    value: "true"

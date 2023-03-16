@@ -20,7 +20,10 @@ namespace ActorClient
     using Dapr.Actors;
     using Dapr.Actors.Client;
     using Dapr.Actors.Communication;
+    using IDemoActor;
+    using IDemoActor.Models;
     using IDemoActorInterface;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Actor Client class.
@@ -36,108 +39,55 @@ namespace ActorClient
         {
             var data = new MyData()
             {
-                PropertyA = "ValueA",
-                PropertyB = "ValueB",
+                Name = "Binh",
+                Phone = "0988401921",
             };
 
             // Create an actor Id.
-            var actorId = new ActorId("abc");
+            var actorId = new ActorId("BARBER_MANAGER");
 
             // Make strongly typed Actor calls with Remoting.
             // DemoActor is the type registered with Dapr runtime in the service.
-            var proxy = ActorProxy.Create<IDemoActor>(actorId, "DemoActor");
 
-            Console.WriteLine("Mak call using actor proxy to save data.");
-            await proxy.SaveData(data);
-            Console.WriteLine("Making call using actor proxy to get data.");
-            var receivedData = await proxy.GetData();
-            Console.WriteLine($"Received data is {receivedData}.");
+            var proxy = ActorProxy.Create<IBarberManagerActor>(actorId, "BarberManagerActor");
+            Console.WriteLine("Mak call using actor proxy to add barber.");
+            await proxy.AddOrUpdateBarber(new Barber
+            {
+                Name = "John",
+                Email = "tinhyeumaunang@gmail.com"
+            });
+            Console.WriteLine("Mak call using actor proxy to add barber.");
+            await proxy.AddOrUpdateBarber(new Barber
+            {
+                Name = "Nancy",
+                Email = "seetinh@gmail.com"
+            });
+            Console.WriteLine("Mak call using actor proxy to get list barber.");
+            var barbers = await proxy.GetListBarber();
 
-            // Making some more calls to test methods.
-            try
-            {
-                Console.WriteLine("Making calls to an actor method which has no argument and no return type.");
-                await proxy.TestNoArgumentNoReturnType();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ERROR: Got exception while making call to method with No Argument & No Return Type. Exception: {ex}");
-            }
-
-            try
-            {
-                await proxy.TestThrowException();
-            }
-            catch (ActorMethodInvocationException ex)
-            {
-                if (ex.InnerException is NotImplementedException)
-                {
-                    Console.WriteLine($"Got Correct Exception from actor method invocation.");
-                }
-                else
-                {
-                    Console.WriteLine($"Got Incorrect Exception from actor method invocation. Exception {ex.InnerException}");
-                }
-            }
+            Console.WriteLine($"List Babers {barbers.Count()}", JsonConvert.SerializeObject(barbers));
 
             // Making calls without Remoting, this shows method invocation using InvokeMethodAsync methods, the method name and its payload is provided as arguments to InvokeMethodAsync methods.
-            Console.WriteLine("Making calls without Remoting.");
-            var nonRemotingProxy = ActorProxy.Create(actorId, "DemoActor");
-            await nonRemotingProxy.InvokeMethodAsync("TestNoArgumentNoReturnType");
-            await nonRemotingProxy.InvokeMethodAsync("SaveData", data);
-            var res = await nonRemotingProxy.InvokeMethodAsync<MyData>("GetData");
-
             Console.WriteLine("Registering the timer and reminder");
             await proxy.RegisterTimer();
             await proxy.RegisterReminder();
             Console.WriteLine("Waiting so the timer and reminder can be triggered");
             await Task.Delay(6000);
 
-            Console.WriteLine("Making call using actor proxy to get data after timer and reminder triggered");
-            receivedData = await proxy.GetData();
-            Console.WriteLine($"Received data is {receivedData}.");
+            // Track the reminder.
+            var timer = new Timer(async state =>
+            {
+                var data = await proxy.GetListBarber();
+                Console.WriteLine($"Received data: {data.Count()}");
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            await Task.Delay(TimeSpan.FromSeconds(21));
+            await timer.DisposeAsync();
 
             Console.WriteLine("Deregistering timer. Timers would any way stop if the actor is deactivated as part of Dapr garbage collection.");
             await proxy.UnregisterTimer();
             Console.WriteLine("Deregistering reminder. Reminders are durable and would not stop until an explicit deregistration or the actor is deleted.");
             await proxy.UnregisterReminder();
-
-            Console.WriteLine("Registering reminder with repetitions - The reminder will repeat 3 times.");
-            await proxy.RegisterReminderWithRepetitions(3);
-            Console.WriteLine("Waiting so the reminder can be triggered");
-            await Task.Delay(5000);
-            Console.WriteLine("Registering reminder with ttl and repetitions, i.e. reminder stops when either condition is met - The reminder will repeat 2 times.");
-            await proxy.RegisterReminderWithTtlAndRepetitions(TimeSpan.FromSeconds(5), 2);
-            Console.WriteLine("Deregistering reminder. Reminders are durable and would not stop until an explicit deregistration or the actor is deleted.");
-            await proxy.UnregisterReminder();
-
-            Console.WriteLine("Registering reminder and Timer with TTL - The reminder will self delete after 10 seconds.");
-            await proxy.RegisterReminderWithTtl(TimeSpan.FromSeconds(10));
-            await proxy.RegisterTimerWithTtl(TimeSpan.FromSeconds(10));
-
-            // Track the reminder.
-            var timer = new Timer(async state => Console.WriteLine($"Received data: {await proxy.GetData()}"), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
-            await Task.Delay(TimeSpan.FromSeconds(21));
-            await timer.DisposeAsync();
-
-            Console.WriteLine("Creating a Bank Actor");
-            var bank = ActorProxy.Create<IBankActor>(ActorId.CreateRandom(), "DemoActor");
-            while (true)
-            {
-                var balance = await bank.GetAccountBalance();
-                Console.WriteLine($"Balance for account '{balance.AccountId}' is '{balance.Balance:c}'.");
-
-                Console.WriteLine($"Withdrawing '{10m:c}'...");
-                try
-                {
-                    await bank.Withdraw(new WithdrawRequest() { Amount = 10m, });
-                }
-                catch (ActorMethodInvocationException ex)
-                {
-                    Console.WriteLine("Overdraft: " + ex.Message);
-                    break;
-                }
-            }
+            Console.ReadLine();
         }
     }
 }

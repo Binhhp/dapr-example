@@ -27,7 +27,7 @@
       <EntryPoint>
          <ExeHost>
             <Program>daprd.exe</Program>
-            <Arguments> --app-id demo_actor --resources-path C:\SFDevCluster\Data\_App\_Node_0\components --app-protocol http --app-port 3000 --dapr-http-port 3500 --dapr-grpc-port 43693 --enable-metrics --log-level debug --app-max-concurrency -1 --placement-host-address placement:6050 --enable-api-logging true</Arguments>
+            <Arguments> --app-id 30shine --resources-path C:\SFDevCluster\Data\_App\_Node_0\dapr\components --app-protocol http --app-port 3000 --dapr-http-port 3500 --dapr-grpc-port 43693 --enable-metrics --log-level debug --app-max-concurrency -1 --placement-host-address localhost:6050 --enable-api-logging true</Arguments>
          </ExeHost>
       </EntryPoint>
    </CodePackage>

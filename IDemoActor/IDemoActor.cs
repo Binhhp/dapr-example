@@ -33,7 +33,7 @@ namespace IDemoActorInterface
         /// Method to get data.
         /// </summary>
         /// <returns>A task that represents the asynchronous save operation.</returns>
-        Task<MyData> GetData();
+        Task<List<MyData>> GetData();
 
         /// <summary>
         /// A test method which throws exception.
@@ -109,19 +109,11 @@ namespace IDemoActorInterface
         /// <summary>
         /// Gets or sets the value for PropertyA.
         /// </summary>
-        public string PropertyA { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets the value for PropertyB.
         /// </summary>
-        public string PropertyB { get; set; }
-
-        /// <inheritdoc/>
-        public override string ToString()
-        {
-            var propAValue = this.PropertyA ?? "null";
-            var propBValue = this.PropertyB ?? "null";
-            return $"PropertyA: {propAValue}, PropertyB: {propBValue}";
-        }
+        public string Phone { get; set; }
     }
 }

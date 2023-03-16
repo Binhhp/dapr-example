@@ -46,13 +46,22 @@ namespace MyService
             Console.WriteLine($"This is Actor id {this.Id} with data {data}.");
 
             // Set State using StateManager, state is saved after the method execution.
-            await this.StateManager.SetStateAsync<MyData>(StateName, data);
+            var state = new List<MyData>();
+            try
+            {
+                state = await StateManager.GetStateAsync<List<MyData>>(StateName);
+            }
+            catch
+            {
+            }
+            state.Add(data);
+            await StateManager.SetStateAsync(StateName, state);
         }
 
-        public Task<MyData> GetData()
+        public Task<List<MyData>> GetData()
         {
             // Get state using StateManager.
-            return this.StateManager.GetStateAsync<MyData>(StateName);
+            return StateManager.GetStateAsync<List<MyData>>(StateName);
         }
 
         public Task TestThrowException()
@@ -93,9 +102,13 @@ namespace MyService
         public async Task ReceiveReminderAsync(string reminderName, byte[] state, TimeSpan dueTime, TimeSpan period)
         {
             // This method is invoked when an actor reminder is fired.
-            var actorState = await this.StateManager.GetStateAsync<MyData>(StateName);
-            actorState.PropertyB = $"Reminder triggered at '{DateTime.Now:yyyy-MM-ddTHH:mm:ss}'";
-            await this.StateManager.SetStateAsync<MyData>(StateName, actorState);
+            var actorState = await this.StateManager.GetStateAsync<List<MyData>>(StateName);
+            actorState.Add(new MyData
+            {
+                Name = $"Reminder triggered at '{DateTime.Now:yyyy-MM-ddTHH:mm:ss}'",
+                Phone = "0988401921"
+            });
+            await StateManager.SetStateAsync(StateName, actorState);
         }
 
         class TimerParams
@@ -157,12 +170,13 @@ namespace MyService
         /// <returns>A task that represents the asynchronous operation.</returns>
         public async Task TimerCallback(byte[] data)
         {
-            var state = await this.StateManager.GetStateAsync<MyData>(StateName);
-            state.PropertyA = $"Timer triggered at '{DateTime.Now:yyyyy-MM-ddTHH:mm:s}'";
-            await this.StateManager.SetStateAsync<MyData>(StateName, state);
-            var timerParams = JsonSerializer.Deserialize<TimerParams>(data);
-            Console.WriteLine("Timer parameter1: " + timerParams.IntParam);
-            Console.WriteLine("Timer parameter2: " + timerParams.StringParam);
+            var state = await this.StateManager.GetStateAsync<List<MyData>>(StateName);
+            state.Add(new MyData
+            {
+                Name = $"Timer triggered at '{DateTime.Now:yyyyy-MM-ddTHH:mm:s}'",
+                Phone = "0988401921"
+            });
+            await StateManager.SetStateAsync(StateName, state);
         }
 
         public async Task<AccountBalance> GetAccountBalance()
